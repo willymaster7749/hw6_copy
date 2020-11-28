@@ -4,7 +4,7 @@ import useChat from './useChat'
 import { Button, Input, message, Tag } from 'antd'
 
 function App() {
-  const { status, opened, messages, sendMessage, clearMessages } = useChat()
+  const { status, opened, messages, sendMessage, clearMessages, sendData } = useChat()
 
   const [username, setUsername] = useState('')
   const [body, setBody] = useState('')

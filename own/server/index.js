@@ -9,6 +9,7 @@ const Message = require('./models/message')
 
 const app = express()
 const server = http.createServer(app)
+// will be a port number inside
 const wss = new WebSocket.Server({ server })
 
 if (!process.env.MONGO_URL) {
@@ -29,8 +30,8 @@ db.on('error', (error) => {
 
 db.once('open', () => {
   console.log('MongoDB connected!')
-
   wss.on('connection', ws => {
+    console.log('wss connected!');
     const sendData = (data) => {
       ws.send(JSON.stringify(data))
     }
@@ -39,13 +40,14 @@ db.once('open', () => {
       sendData(['status', s])
     }
 
-    Message.find()
-      .limit(100)
+    Message.find().limit(100)
       .sort({ _id: 1 })
       .exec((err, res) => {
         if (err) throw err
 
         // initialize app with existing messages
+        console.log('initting...');
+        console.log(res);
         sendData(['init', res])
       })
 
@@ -57,12 +59,24 @@ db.once('open', () => {
       switch (task) {
         case 'input': {
           // TODO
+          const instance = new Message(payload);
+          
+          console.log(payload);
+          console.log('testing...');
+          const sendBack = ['output', [payload]];
+          sendData(sendBack);
+
+          instance.save((err) => {
+            if(err){
+              return handleError(err);
+            }
+          })
           break
         }
         case 'clear': {
           Message.deleteMany({}, () => {
             sendData(['cleared'])
-
+            
             sendStatus({
               type: 'info',
               msg: 'Message cache cleared.'
