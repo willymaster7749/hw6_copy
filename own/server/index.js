@@ -60,11 +60,17 @@ db.once('open', () => {
         case 'input': {
           // TODO
           const instance = new Message(payload);
-          
+
           console.log(payload);
           console.log('testing...');
           const sendBack = ['output', [payload]];
-          sendData(sendBack);
+
+          // send to every client instead of the sender
+          wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(sendBack))
+            }
+          });
 
           instance.save((err) => {
             if(err){
@@ -75,12 +81,18 @@ db.once('open', () => {
         }
         case 'clear': {
           Message.deleteMany({}, () => {
-            sendData(['cleared'])
+
+            // send to every client instead of the sender
+            wss.clients.forEach(function each(client) {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(['cleared']));
+                client.send(JSON.stringify(['status', {
+                  type: 'info',
+                  msg: 'Message cache cleared.'
+                }]))
+              }
+            });
             
-            sendStatus({
-              type: 'info',
-              msg: 'Message cache cleared.'
-            })
           })
 
           break
